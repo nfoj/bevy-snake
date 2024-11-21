@@ -215,26 +215,42 @@ fn position_translation(
     }
 }
 
-// input movement
+// moviment
 fn snake_movement_input(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut heads: Query<&mut SnakeHead>,
 ) {
     if let Some(mut head) = heads.iter_mut().next() {
-        let dir: Direction = if keyboard_input.pressed(KeyCode::ArrowLeft) {
+        let dir: Direction = if keyboard_input.pressed(KeyCode::ArrowLeft)
+            || keyboard_input.pressed(KeyCode::KeyA)
+            || keyboard_input.pressed(KeyCode::Numpad4)
+            || keyboard_input.pressed(KeyCode::KeyJ)
+        {
             Direction::Left
-        } else if keyboard_input.pressed(KeyCode::ArrowDown) {
+        } else if keyboard_input.pressed(KeyCode::ArrowDown)
+            || keyboard_input.pressed(KeyCode::KeyS)
+            || keyboard_input.pressed(KeyCode::Numpad5)
+            || keyboard_input.pressed(KeyCode::KeyK)
+        {
             Direction::Down
-        } else if keyboard_input.pressed(KeyCode::ArrowUp) {
+        } else if keyboard_input.pressed(KeyCode::ArrowUp)
+            || keyboard_input.pressed(KeyCode::KeyW)
+            || keyboard_input.pressed(KeyCode::Numpad8)
+            || keyboard_input.pressed(KeyCode::KeyI)
+        {
             Direction::Up
-        } else if keyboard_input.pressed(KeyCode::ArrowRight) {
+        } else if keyboard_input.pressed(KeyCode::ArrowRight)
+            || keyboard_input.pressed(KeyCode::KeyD)
+            || keyboard_input.pressed(KeyCode::Numpad6)
+            || keyboard_input.pressed(KeyCode::KeyL)
+        {
             Direction::Right
         } else {
             head.direction
         };
 
         if dir != head.direction.opposite() {
-            head.direction = dir;
+            head.direction = dir; // Atualiza a direção da cabeça
         }
     }
 }
