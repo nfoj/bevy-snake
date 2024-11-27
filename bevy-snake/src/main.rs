@@ -71,6 +71,15 @@ struct LastTailPosition(Option<Position>);
 #[derive(Event)]
 struct GameOverEvent;
 
+#[derive(Component)]
+struct Board;
+
+#[derive(Default, Resource)]
+struct Score(u32);
+
+#[derive(Event)]
+struct AddScoreEvent;
+
 struct Snake;
 
 //
@@ -316,6 +325,7 @@ fn snake_growth(
 fn snake_eating(
     mut commands: Commands,
     mut growth_writer: EventWriter<GrowthEvent>,
+    mut score_write: EventWriter<AddScoreEvent>,
     food_positions: Query<(Entity, &Position), With<Food>>,
     head_positions: Query<&Position, With<SnakeHead>>,
 ) {
@@ -324,6 +334,7 @@ fn snake_eating(
             if food_pos == head_pos {
                 commands.entity(food_entity).despawn();
                 growth_writer.send(GrowthEvent);
+                score_write.send(AddScoreEvent);
             }
         }
     }
@@ -345,7 +356,84 @@ fn game_over(
     }
 }
 
-// main
+struct BoardPlugin;
+
+impl Plugin for BoardPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_event::<GameOverEvent>();
+        app.insert_resource(Score::default())
+            .add_event::<AddScoreEvent>()
+            .add_systems(Startup, setup_board)
+            .add_systems(Update, update_board);
+    }
+}
+
+impl Score {
+    fn reset(&mut self) {
+        self.0 = 0;
+    }
+
+    fn increment(&mut self) {
+        self.0 += 1;
+    }
+
+    fn get(&self) -> u32 {
+        self.0
+    }
+}
+
+fn setup_board(mut commands: Commands) {
+    commands
+        .spawn(
+            TextBundle::from_sections([
+                TextSection::new(
+                    "Score: ",
+                    TextStyle {
+                        font_size: 20.0,
+                        color: Color::srgb(0., 0., 0.),
+                        ..default()
+                    },
+                ),
+                TextSection::new(
+                    "0",
+                    TextStyle {
+                        font_size: 20.0,
+                        color: Color::srgb(0., 0., 0.),
+                        ..default()
+                    },
+                ),
+            ])
+            .with_style(Style {
+                position_type: PositionType::Absolute,
+                left: Val::Px(10.0),
+                top: Val::Px(10.0),
+                ..default()
+            }),
+        )
+        .insert(Board);
+}
+
+fn update_board(
+    mut score: ResMut<Score>,
+    mut reader: EventReader<AddScoreEvent>,
+    mut query: Query<&mut Text, With<Board>>,
+) {
+    if reader.read().next().is_some() {
+        score.increment();
+    }
+
+    for mut text in query.iter_mut() {
+        text.sections[1].value = format!("{}", score.get());
+    }
+}
+
+fn reset_score(mut score: ResMut<Score>, mut query: Query<&mut Text, With<Board>>) {
+    for mut text in query.iter_mut() {
+        score.reset();
+        text.sections[1].value = format!("{}", score.get());
+    }
+}
+
 fn main() {
-    App::new().add_plugins(Snake).run();
+    App::new().add_plugins(Snake).add_plugins(BoardPlugin).run();
 }
