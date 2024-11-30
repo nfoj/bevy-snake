@@ -344,6 +344,10 @@ fn snake_eating(
 fn game_over(
     mut commands: Commands,
     mut reader: EventReader<GameOverEvent>,
+    //
+    mut score: ResMut<Score>,
+    mut query: Query<&mut Text, With<Board>>,
+    //
     segments_res: ResMut<SnakeSegments>,
     food: Query<Entity, With<Food>>,
     segments: Query<Entity, With<SnakeSegment>>,
@@ -352,6 +356,11 @@ fn game_over(
         for ent in food.iter().chain(segments.iter()) {
             commands.entity(ent).despawn();
         }
+        for mut text in query.iter_mut() {
+            score.reset();
+            text.sections[1].value = format!("{}", score.get());
+        }
+
         spawn_snake(commands, segments_res);
     }
 }
@@ -423,13 +432,6 @@ fn update_board(
     }
 
     for mut text in query.iter_mut() {
-        text.sections[1].value = format!("{}", score.get());
-    }
-}
-
-fn reset_score(mut score: ResMut<Score>, mut query: Query<&mut Text, With<Board>>) {
-    for mut text in query.iter_mut() {
-        score.reset();
         text.sections[1].value = format!("{}", score.get());
     }
 }
